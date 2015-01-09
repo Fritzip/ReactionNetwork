@@ -3,8 +3,7 @@ import re
 class Rule():
 	"""Transform a formated rule into stochastic matrix"""
 	def __init__(self, rule):
-		self.rule = rule
-		left, right = self.rule.replace(' ','').split('=')
+		left, right = rule.replace(' ','').split('=')
 
 		if len(left) == 4:
 			self.l1, self.l2 = left[0:2], left[2:4]
@@ -25,7 +24,8 @@ class Rule():
 			print "Error : not valid rule"
 
 
-		print self.l1, self.op1, self.l2, ' = ', self.r1, self.op2, self.r2
+		self.rule = "%s%s%s=%s%s%s" % (self.l1, self.op1, self.l2, self.r1, self.op2, self.r2)
+
 
 	def __repr__(self):
 		return self.rule
