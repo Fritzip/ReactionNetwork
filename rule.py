@@ -1,4 +1,3 @@
-import re
 
 class Rule():
 	"""Transform a formated rule into stochastic matrix"""

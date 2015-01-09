@@ -40,7 +40,6 @@ class Graph():
 		self.d_state_type = self.compute_d_state_type()
 		self.d_pair = self.compute_d_pair()
 
-	def update_
 
 if __name__ == '__main__':
 	nb_part = 10

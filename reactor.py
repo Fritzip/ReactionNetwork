@@ -3,16 +3,19 @@ import random
 import numpy as np
 
 from rule import *
+from graph import *
 
 class Reactor():
 	"""Init and run Gillespie algorithm"""
-	def __init__(self, l_rules, kconf, kcoll):
+	def __init__(self, graph, l_rules, kconf, kcoll):
 		self.l_rules = [Rule(elem) for elem in l_rules]
 		self.kconf = kconf
 		self.kcoll = kcoll
 		self.m_stoc = self.compute_stochastic_matrix()
+		self.graph = graph
 
 	def compute_stochastic_matrix(self):
+		""" Compute the stochastic matrix from the list of rules """
 		l_stype = set()
 		
 		for rule in self.l_rules:
@@ -33,10 +36,7 @@ class Reactor():
 				m[i][j] = self.kconf
 				m[j][i] = self.kconf
 				
-
-		print l_stype
-		print m
-
+		return m
 
 	def gillespie(self):
 		# while t < tmax and min(state.tolist()[0]) > 0:
@@ -53,7 +53,19 @@ class Reactor():
 		# 	print t, state.tolist()[0]
 		pass
 
+
 if __name__ == '__main__':
-	r = Reactor(['a1a2=a2+a3', 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'], 0.1, 0.2)
-	# r.compute_stochastic_matrix()
-	# print r.l_rules
+	nb_part = 10
+	part_type = ['a', 'b', 'c', 'd', 'e', 'f']
+	part_state = range(9)
+	part = []
+	for part_id in xrange(0,nb_part):
+		part.append( Particle(part_id, random.choice(part_type), random.choice(part_state) ))
+
+	# print part
+	b = np.random.random_integers(0, 1,size=(nb_part, nb_part))
+	mat = (b + b.T)/2
+	print mat
+	G = Graph(part, mat)
+	r = Reactor(G, ['a1a2=a2+a3', 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'], 0.1, 0.2)
+	print r.m_stoc
