@@ -35,6 +35,7 @@ class Graph():
 					d[typeij].append((i,j))
 				else:
 					d[typeij] = [(i,j)]
+		return d
 
 	def recompute_all(self):
 		self.d_state_type = self.compute_d_state_type()

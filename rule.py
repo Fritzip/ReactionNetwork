@@ -29,6 +29,7 @@ class Rule():
 	def __repr__(self):
 		return self.rule
 
+
 if __name__ == '__main__':
 	r = Rule("a0+a1 = a1a2")
 	print r		
