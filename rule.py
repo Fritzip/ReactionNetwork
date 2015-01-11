@@ -7,7 +7,7 @@ class Rule():
 		self.left = self.init_op(l)
 		self.right = self.init_op(r)
 
-		self.rule = "%s%s%s=%s%s%s" % (self.left[0], self.op[0], self.left[1], self.right[0], self.op[1], self.right[1])
+		self.rule = "%s%s%s = %s%s%s" % (self.left[0], self.op[0], self.left[1], self.right[0], self.op[1], self.right[1])
 
 
 	def __repr__(self):

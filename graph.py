@@ -43,11 +43,31 @@ class Graph():
 		if rule.is_state_modified( 1 ) : self.change_part_state(id_part2, rule.get_final_state(1))
 
 	def change_part_state(self, id, state):
-		self.d_state_type[self.l_particles[id].stype()].remove(id)
+		# self.d_state_type[self.l_particles[id].stype()].remove(id)
+		rm_from_dict(self.d_state_type, self.l_particles[id].stype(), id )
 		self.l_particles[id].state = state
 		add_to_dict(self.d_state_type, self.l_particles[id].stype(), id)
 
+	def modify_state_of_linked_pair(self, pair, rule):
+		# self.d_pair[make_key_pair(rule.left[0], rule.left[1])].remove(pair)
+		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
+		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
+		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
+		add_to_dict(self.d_pair, make_key_pair(rule.right[0],rule.right[1]), pair)
 
+	def unlink(self, pair, rule):
+		self.m_adj[pair[0]][pair[1]] = 0
+		self.m_adj[pair[1]][pair[0]] = 0
+		# self.d_pair[make_key_pair(rule.left[0], rule.left[1])].remove(pair)
+		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
+		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
+		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
+
+
+def rm_from_dict(d, key, value):
+	d[key].remove(value)
+	if d[key] == []:
+		del d[key]
 
 def add_to_dict(d, key, value):
 	if key in d.keys():
