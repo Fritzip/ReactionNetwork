@@ -18,29 +18,28 @@ class Reactor():
 
 	def compute_speed( self, rule ):
 		if rule.op[0] == '+':
-			nb_reac1 = len(self.g.d_state_type[rule.left[0]]) if rule.left[0] in self.g.d_state_type.keys() else 0
-			nb_reac2 = len(self.g.d_state_type[rule.left[1]]) if rule.left[1] in self.g.d_state_type.keys() else 0
-			return (nb_reac1 + nb_reac2)*self.kcoll if nb_reac1 != 0 and nb_reac2 != 0 else 0
+			nb_reac0 = len(self.g.d_state_type[rule.left[0]]) if rule.left[0] in self.g.d_state_type.keys() else 0
+			nb_reac1 = len(self.g.d_state_type[rule.left[1]]) if rule.left[1] in self.g.d_state_type.keys() else 0
+			return (nb_reac0 + nb_reac1)*self.kcoll if nb_reac0 != 0 and nb_reac1 != 0 else 0
 
 		elif rule.op[0] == '.':
-			return len(self.g.d_pair[ make_key_pair(rule.left[0], rule.left[1]) ])*self.kconf if make_key_pair(rule.left[0],rule.left[1]) in self.g.d_pair.keys() else 0
+			key_pair = make_key_pair(rule.left[0], rule.left[1]) 
+			return len(self.g.d_pair[ key_pair ])*self.kconf if key_pair in self.g.d_pair.keys() else 0
 
 	def apply_reaction(self, rule):
 		if rule.op[0] == '+':
-			id_part1 = random.choice(self.g.d_state_type[rule.left[0]])
-			id_part2 = random.choice(self.g.d_state_type[rule.left[1]])
+			id_part0 = random.choice(self.g.d_state_type[rule.left[0]])
+			id_part1 = random.choice(self.g.d_state_type[rule.left[1]])
 
-			if id_part1 == id_part2: return -1
-			try:
-				if make_tpl(id_part1, id_part2) in self.g.d_pair[make_key_pair(rule.left[0], rule.left[1])] : return -1
-			except KeyError: pass
+			if id_part0 == id_part1: return -1
+			key, id_pair = make_key_and_id_pair(rule.left[0], rule.left[1], id_part0, id_part1)
+			if self.g.pair_already_exist(key, id_pair): return -1
 
-			self.g.link(id_part1, id_part2, rule)
-			return make_tpl(id_part1, id_part2)
+			self.g.link(id_part0, id_part1, rule)
+			return id_pair
 
 		elif rule.op[0] == '.':
-			try:
-				pair = random.choice(self.g.d_pair[make_key_pair(rule.left[0], rule.left[1])])
+			try: pair = random.choice(self.g.d_pair[make_key_pair(rule.left[0], rule.left[1])])
 			except KeyError: return -1
 			if rule.op[1] == '+':
 				self.g.unlink(pair, rule)
@@ -48,7 +47,6 @@ class Reactor():
 				self.g.modify_state_of_linked_pair(pair, rule)
 			return pair
 				
-
 	def gillespie( self ):
 		t = 0
 		while t < self.tmax:

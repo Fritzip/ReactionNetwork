@@ -35,12 +35,14 @@ class Graph():
 		self.d_state_type = self.compute_d_state_type()
 		self.d_pair = self.compute_d_pair()
 
-	def link(self, id_part1, id_part2, rule):
-		self.m_adj[id_part1][id_part2] = 1
-		self.m_adj[id_part2][id_part1] = 1
-		add_to_dict(self.d_pair, make_key_pair(rule.right[0],rule.right[1]), make_tpl(id_part1, id_part2))
-		if rule.is_state_modified( 0 ) : self.change_part_state(id_part1, rule.get_final_state(0))
-		if rule.is_state_modified( 1 ) : self.change_part_state(id_part2, rule.get_final_state(1))
+	def link(self, id_part0, id_part1, rule):
+		self.m_adj[id_part0][id_part1] = 1
+		self.m_adj[id_part1][id_part0] = 1
+		key, id_pair = make_key_and_id_pair(rule.right[0], rule.right[1], id_part0, id_part1)
+		add_to_dict(self.d_pair, key, id_pair)
+		# add_to_dict(self.d_pair, make_key_pair(rule.right[0],rule.right[1]), make_tpl(id_part1, id_part2))
+		if rule.is_state_modified( 0 ) : self.change_part_state(id_part0, rule.get_final_state(0))
+		if rule.is_state_modified( 1 ) : self.change_part_state(id_part1, rule.get_final_state(1))
 
 	def change_part_state(self, id, state):
 		# self.d_state_type[self.l_particles[id].stype()].remove(id)
@@ -53,7 +55,9 @@ class Graph():
 		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
 		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
 		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
-		add_to_dict(self.d_pair, make_key_pair(rule.right[0],rule.right[1]), pair)
+		key, id_pair = make_key_and_id_pair(rule.right[0], rule.right[1], pair[0], pair[1])
+		add_to_dict(self.d_pair, key, id_pair)
+		# add_to_dict(self.d_pair, make_key_pair(rule.right[0],rule.right[1]), pair)
 
 	def unlink(self, pair, rule):
 		self.m_adj[pair[0]][pair[1]] = 0
@@ -62,6 +66,10 @@ class Graph():
 		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
 		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
 		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
+
+	def pair_already_exist(self, key, pair):
+		return 1 if key in self.d_pair.keys() and pair in self.d_pair[key] else 0
+
 
 
 def rm_from_dict(d, key, value):
@@ -75,8 +83,15 @@ def add_to_dict(d, key, value):
 	else:
 		d[key] = [value]
 
-def make_tpl(i, j):
-	return (i,j) if i < j else (j, i)
+# def make_tpl(i, j):
+# 	return (i,j) if i < j else (j, i)
+
+def make_key_and_id_pair(type1, type2, id1, id2):
+	if type1 > type2:
+		return type1+type2, (id1, id2) 
+	else:
+		return type2+type1, (id2, id1)
+
 
 def make_key_pair(type1, type2):
 	return type1+type2 if type1 > type2 else type2 + type1
