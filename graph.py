@@ -49,18 +49,20 @@ class Graph():
 		self.l_particles[id].state = state
 		add_to_dict(self.d_state_type, self.l_particles[id].stype(), id)
 
-	def modify_state_of_linked_pair(self, pair, rule):
-		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
+	def modify_state_of_linked_pair(self, pair, key, rule):
+		rm_from_dict(self.d_pair, key, pair)
+		if key != rule.left[0]+rule.left[1] : pair = pair[::-1]
 		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
 		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
 		key, id_pair = make_key_and_id_pair(rule.right[0], rule.right[1], pair[0], pair[1])
 		add_to_dict(self.d_pair, key, id_pair)
 
-	def unlink(self, pair, rule):
+	def unlink(self, pair, key, rule):
 		""" Unink two particles (defined by a pair of id) according to the given rule """
 		self.m_adj[pair[0]][pair[1]] = 0
 		self.m_adj[pair[1]][pair[0]] = 0
-		rm_from_dict(self.d_pair, make_key_pair(rule.left[0], rule.left[1]), pair)
+		rm_from_dict(self.d_pair, key, pair)
+		if key != rule.left[0]+rule.left[1] : pair = pair[::-1]
 		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
 		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
 

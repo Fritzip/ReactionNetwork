@@ -39,12 +39,13 @@ class Reactor():
 			return id_pair
 
 		elif rule.op[0] == '.':
-			try: pair = random.choice(self.g.d_pair[make_key_pair(rule.left[0], rule.left[1])])
+			key = make_key_pair(rule.left[0], rule.left[1])
+			try: pair = random.choice(self.g.d_pair[ key ])
 			except KeyError: return -1
 			if rule.op[1] == '+':
-				self.g.unlink(pair, rule)
+				self.g.unlink(pair, key, rule)
 			elif rule.op[1] == '.':
-				self.g.modify_state_of_linked_pair(pair, rule)
+				self.g.modify_state_of_linked_pair(pair, key, rule)
 			return pair
 				
 	def gillespie( self ):
@@ -85,7 +86,7 @@ if __name__ == '__main__':
 	# print mat
 	G = Graph(part, mat)
 
-	r = Reactor(G, ['a0+a1=a2a3','a2a3=a4a5', 'a4a5=a1+a0'], 0.5, 0.2, 2) #, 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'
+	r = Reactor(G, ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1'], 0.5, 0.2, 4) #, 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'
 	print r.g.d_state_type
 	print r.g.d_pair
 	print r.gillespie()
