@@ -16,6 +16,11 @@ class Reactor():
 		self.kcoll = kcoll
 		self.tmax = tmax
 
+	@classmethod
+	def from_particles_init(cls, d_init_part, d_init_graph, rules, kconf, kcoll, tmax):
+		"""Initialize reactor from init dictionary of particles and interactions"""
+		return cls(Graph.from_particles_init(d_init_part, d_init_graph), rules, kconf, kcoll, tmax)
+
 	def compute_speed( self, rule ):
 		if rule.op[0] == '+':
 			nb_reac0 = len(self.g.d_state_type[rule.left[0]]) if rule.left[0] in self.g.d_state_type.keys() else 0
@@ -74,23 +79,56 @@ class Reactor():
 
 if __name__ == '__main__':
 	start = time.time()
-	nb_part = 10
-	part_type = ['a', 'b', 'c']
-	part_state = range(2)
-	part = []
-	for part_id in xrange(0,nb_part):
-		part.append( Particle(part_id, 'a', random.choice(part_state) )) #random.choice(part_type)
+
+	test = '1'
+	if test == '1':
+		d_init_part = {'a0':15, 'a1':1}
+		d_init_grap = {}	
+		rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1']
+		r = Reactor.from_particles_init(d_init_part, d_init_grap, rules, 0.5, 0.2, 4) #, 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'
+		
+
+	if test == '2':
+		pass
+		
+	if test == '3':
+		pass
+		
+	if test == '3.a':
+		pass
+		
+	if test == '3.b':
+		pass
+		
+	if test == '3.c':
+		pass
+		
+	if test == '3.d':
+		pass
+		
+	if test == '3.e':
+		pass
+		
+
+	# nb_part = 10
+	
+	""" random init """
+	# part_type = ['a', 'b', 'c']
+	# part_state = range(2)
+	# for part_id in xrange(0,nb_part):
+		# part.append( Particle(part_id, 'a', random.choice(part_state) )) #random.choice(part_type)
+
 	# b = np.random.random_integers(0, 1, size=(nb_part, nb_part))
-	mat = np.zeros((nb_part, nb_part))
+	# mat = np.zeros((nb_part, nb_part))
 	# mat = (b + b.T)/2
 	# print mat
-	G = Graph(part, mat)
+	# G = Graph(part, mat)
 
-	r = Reactor(G, ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1'], 0.5, 0.2, 4) #, 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'
 	print r.g.d_state_type
 	print r.g.d_pair
 	print r.gillespie()
 	print r.g.d_state_type
 	print r.g.d_pair
+
 	end = time.time()
 	print end - start

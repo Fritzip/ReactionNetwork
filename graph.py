@@ -11,6 +11,35 @@ class Graph():
 		self.m_adj = m_adj
 		self.d_pair = self.compute_d_pair()
 
+	@classmethod
+	def from_particles_init(cls, d_init_part, d_init_graph):
+		"""Initialize particle from init dictionary of particles"""
+		nb_part = sum(d_init_part.values())
+
+		id_part = 0
+		part = []
+		for stype in d_init_part.keys():
+			i = 0
+			nb_st_part = d_init_part[stype]
+			while i < nb_st_part:
+				part.append( Particle.from_stype(id_part, stype) )		
+				i += 1
+				id_part += 1
+
+		mat = np.zeros((nb_part, nb_part))
+
+		# for interaction in d_init_part.keys():
+		# 	i = 0
+		# 	nb_st_part = d_init_part[stype]
+		# 	while i < nb_st_part:
+		# 		part.append( Particle.from_stype(id_part, stype) )		
+		# 		i += 1
+		# 		id_part += 1
+
+		return cls(part, mat)
+
+
+
 	def compute_d_state_type(self):
 		""" Initialize dict of state/type """
 		d = {}
