@@ -9,7 +9,7 @@ from graph import *
 
 class Reactor():
 	"""Init and run Gillespie algorithm"""
-	def __init__(self, graph, l_rules, kconf, kcoll, tmax):
+	def __init__(self, graph, l_rules, kcoll, kconf, tmax):
 		self.g = graph
 		self.l_rules = [Rule(elem) for elem in l_rules]
 		self.kconf = kconf
@@ -17,9 +17,9 @@ class Reactor():
 		self.tmax = tmax
 
 	@classmethod
-	def from_particles_init(cls, d_init_part, d_init_graph, rules, kconf, kcoll, tmax):
+	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax):
 		"""Initialize reactor from init dictionary of particles and interactions"""
-		return cls(Graph.from_particles_init(d_init_part, d_init_graph), rules, kconf, kcoll, tmax)
+		return cls(Graph.from_particles_init(d_init_part, d_init_graph), RuleGenerator(l_regex_rules, l_type).l_rules, kconf, kcoll, tmax)
 
 	def compute_speed( self, rule ):
 		if rule.op[0] == '+':
@@ -39,19 +39,24 @@ class Reactor():
 			if id_part0 == id_part1: return -1
 			key, id_pair = make_key_and_id_pair(rule.left[0], rule.left[1], id_part0, id_part1)
 			if self.g.pair_already_exist(key, id_pair): return -1
+			id_pair = (id_part0, id_part1)
 
 			self.g.link(id_part0, id_part1, rule)
-			return id_pair
 
 		elif rule.op[0] == '.':
 			key = make_key_pair(rule.left[0], rule.left[1])
-			try: pair = random.choice(self.g.d_pair[ key ])
+			try: id_pair = random.choice(self.g.d_pair[ key ])
 			except KeyError: return -1
 			if rule.op[1] == '+':
-				self.g.unlink(pair, key, rule)
-			elif rule.op[1] == '.':
-				self.g.modify_state_of_linked_pair(pair, key, rule)
-			return pair
+				self.g.unlink(id_pair, key, rule)
+			if key != rule.left[0]+rule.left[1] : id_pair = id_pair[::-1]
+
+
+		self.g.modify_state_of_pair(id_pair, rule)
+
+		self.g.recompute_all()
+		return id_pair
+
 				
 	def gillespie( self ):
 		t = 0
@@ -80,49 +85,49 @@ class Reactor():
 if __name__ == '__main__':
 	start = time.time()
 
-	test = '1'
-	if test == '1':
-		d_init_part = {'a0':15, 'a1':1}
+	N = 20
+	kcoll = 0.2
+	kconf = 0.7
+	tmax = 100
+
+	test = 6
+	if test == 1:
+		d_init_part = {'a0':N, 'a1':1}
 		d_init_grap = {}	
-		rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1']
-		r = Reactor.from_particles_init(d_init_part, d_init_grap, rules, 0.5, 0.2, 4) #, 'b1 +b2= c1. c3', 'a1b3=a2b2', 'b2+b0=b3+b1'
+		l_rules = ['a0+a1=a2a1']
+		l_type = ['a']
 		
+	if test == 2:
+		d_init_part = {'a0':N, 'a1':1}
+		d_init_grap = {}	
+		l_rules = ['a0+a1=a1a2']
+		l_type = ['a']
+		
+	if test == 3:
+		d_init_part = {'a0':N, 'b0':N, 'b1':1}
+		d_init_grap = {}	
+		l_rules = ['a0+b1=a1b2', 'a1b3=a2b2', 'a0+a1=a2a1', 'b2+b0=b3b2' ]
+		l_type = ['a', 'b']
 
-	if test == '2':
-		pass
-		
-	if test == '3':
-		pass
-		
-	if test == '3.a':
-		pass
-		
-	if test == '3.b':
-		pass
-		
-	if test == '3.c':
-		pass
-		
-	if test == '3.d':
-		pass
-		
-	if test == '3.e':
-		pass
-		
+	if test == 4:
+		d_init_part = {'a0':N, 'a1':1}
+		d_init_grap = {}	
+		l_rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1']
+		l_type = ['a']
 
-	# nb_part = 10
-	
-	""" random init """
-	# part_type = ['a', 'b', 'c']
-	# part_state = range(2)
-	# for part_id in xrange(0,nb_part):
-		# part.append( Particle(part_id, 'a', random.choice(part_state) )) #random.choice(part_type)
+	if test == 5:
+		d_init_part = {'a0':N, 'b0':N, 'b1':1}
+		d_init_grap = {}	
+		l_rules = ['*0+*1=*2*2']
+		l_type = ['a', 'b', 'c']
 
-	# b = np.random.random_integers(0, 1, size=(nb_part, nb_part))
-	# mat = np.zeros((nb_part, nb_part))
-	# mat = (b + b.T)/2
-	# print mat
-	# G = Graph(part, mat)
+	if test == 6:
+		d_init_part = {'a0':N, 'b0':N, 'b1':1}
+		d_init_grap = {}	
+		l_rules = ['*0+#1=*0#1']
+		l_type = ['a', 'b', 'c']
+
+	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax) 
 
 	print r.g.d_state_type
 	print r.g.d_pair

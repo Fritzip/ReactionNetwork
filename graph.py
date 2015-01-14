@@ -60,40 +60,28 @@ class Graph():
 
 	def recompute_all(self):
 		""" Reinit all dictionary from adjacency matrix """ 
-		self.d_state_type = self.compute_d_state_type()
+		# self.d_state_type = self.compute_d_state_type()
 		self.d_pair = self.compute_d_pair()
 
 	def link(self, id_part0, id_part1, rule):
 		""" Link two particles (defined by there id) according to the given rule """
 		self.m_adj[id_part0][id_part1] = 1
 		self.m_adj[id_part1][id_part0] = 1
-		key, id_pair = make_key_and_id_pair(rule.right[0], rule.right[1], id_part0, id_part1)
-		add_to_dict(self.d_pair, key, id_pair)
-		if rule.is_state_modified( 0 ) : self.change_part_state(id_part0, rule.get_final_state(0))
-		if rule.is_state_modified( 1 ) : self.change_part_state(id_part1, rule.get_final_state(1))
+
+	def unlink(self, pair, key, rule):
+		""" Unink two particles (defined by a pair of id) according to the given rule """
+		self.m_adj[pair[0]][pair[1]] = 0
+		self.m_adj[pair[1]][pair[0]] = 0
+
+	def modify_state_of_pair(self, pair, rule):
+		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
+		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
 
 	def change_part_state(self, id, state):
 		""" Modify the state of a given particle (defined by id) """
 		rm_from_dict(self.d_state_type, self.l_particles[id].stype(), id )
 		self.l_particles[id].state = state
 		add_to_dict(self.d_state_type, self.l_particles[id].stype(), id)
-
-	def modify_state_of_linked_pair(self, pair, key, rule):
-		rm_from_dict(self.d_pair, key, pair)
-		if key != rule.left[0]+rule.left[1] : pair = pair[::-1]
-		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
-		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
-		key, id_pair = make_key_and_id_pair(rule.right[0], rule.right[1], pair[0], pair[1])
-		add_to_dict(self.d_pair, key, id_pair)
-
-	def unlink(self, pair, key, rule):
-		""" Unink two particles (defined by a pair of id) according to the given rule """
-		self.m_adj[pair[0]][pair[1]] = 0
-		self.m_adj[pair[1]][pair[0]] = 0
-		rm_from_dict(self.d_pair, key, pair)
-		if key != rule.left[0]+rule.left[1] : pair = pair[::-1]
-		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
-		if rule.is_state_modified( 1 ) : self.change_part_state(pair[1], rule.get_final_state(1))
 
 	def pair_already_exist(self, key, pair):
 		return 1 if key in self.d_pair.keys() and pair in self.d_pair[key] else 0
