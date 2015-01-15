@@ -2,6 +2,8 @@ import math
 import random
 import numpy as np
 import time
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 
 from rule import *
 from graph import *
@@ -57,13 +59,56 @@ class Reactor():
 		self.g.recompute_all()
 		return id_pair
 
-				
+	# def update_y(self, d_y_evol, part_type, nb, size, d_col ):
+	# 	if part_type not in d_y_evol.keys():
+	# 		d_y_evol[part_type] = [0]*(size)
+	# 		# d_col[part_type] = COL
+	# 	d_y_evol[part_type].append(nb)
+
+	def compute_plot_dict(self, d_y_evol, d_part, size, d_col, col_count ):
+		d_length = {key: len(value) for key, value in d_part.items()}
+
+		for part_type in d_y_evol.keys():
+			if part_type not in d_length.keys():
+				d_length[part_type] = 0
+			if part_type not in d_col.keys():
+				d_col[part_type] = col_count
+				col_count += 1
+
+		for part_type in d_length.keys():
+			if part_type not in d_y_evol.keys():
+				d_y_evol[part_type] = [0]*(size)
+			d_y_evol[part_type].append(d_length[part_type])
+
+			if part_type not in d_col.keys():
+				d_col[part_type] = col_count
+				col_count += 1
+
+
+			# self.update_y(d_y_evol, part_type, d_length[part_type], size, d_col)
+
+
 	def gillespie( self ):
+		ECHO = 0;
+		PLOT = 0;
+		SMOOTH = 1;
 		t = 0
+		time_vect = []
+		nb_part = len(self.g.l_particles)
+
+		if PLOT:
+			plt.ion()
+			
+			col_count_type = 0
+			col_count_pair = 0
+			d_col_type = {}
+			d_col_pair = {}
+
+			d_y_evol_type = {}
+			d_y_evol_pair = {}
+
 		while t < self.tmax:
-			print "############ t = %.3f ###########" % t
 			ai = [ self.compute_speed(rule) for rule in self.l_rules ]
-			print "# ai = ", ai
 			sumai = sum(ai)
 			if sumai == 0 : break
 			t += -math.log(random.random())/sumai
@@ -73,24 +118,56 @@ class Reactor():
 			while mv < rand:
 				mv += ai[n]/sumai
 				n += 1
-			print "# reac = ", self.l_rules[n-1].rule
-			print "# id = ", self.apply_reaction(self.l_rules[n-1])
-			print "#", r.g.d_state_type
-			print "#", r.g.d_pair
-			print "##################################\n\n"
+
+			pair = self.apply_reaction(self.l_rules[n-1])
+			if ECHO and pair != -1:
+				print "############ t = %.3f ###########" % t
+				print "# ai = ", ai
+				print "# reac = ", self.l_rules[n-1].rule
+				print "# id = ", pair
+				print "#", r.g.d_state_type
+				print "#", r.g.d_pair
+				print "##################################\n\n"
+
+
+			if PLOT:
+				self.compute_plot_dict( d_y_evol_type, self.g.d_state_type, len(time_vect), d_col_type, col_count_type )
+				self.compute_plot_dict( d_y_evol_pair, self.g.d_pair, len(time_vect), d_col_pair, col_count_pair )
+				time_vect.append(t)
+				plt.figure(1)
+				plt.pause(0.00001)
+				plt.cla()
+				for key in d_y_evol_type.keys():
+					plt.plot(time_vect, d_y_evol_type[key], linewidth=2, label=key)
+					plt.legend()
+
+				plt.draw()
+				plt.xlim([0, t+5])
+				plt.ylim(0, plt.ylim()[1])
+
+				plt.figure(2)
+				plt.pause(0.00001)
+				plt.cla()
+				for key in d_y_evol_pair.keys():
+					plt.plot(time_vect, d_y_evol_pair[key], linewidth=2, label=key)
+					plt.legend()
+
+				plt.draw()
+
+				plt.xlim([0, t+5])
+				plt.ylim(0, plt.ylim()[1])
 
 		return t
-
-
+		
 if __name__ == '__main__':
 	start = time.time()
 
-	N = 20
+	N = 200
 	kcoll = 0.2
 	kconf = 0.7
 	tmax = 100
 
-	test = 6
+	test = 4
 	if test == 1:
 		d_init_part = {'a0':N, 'a1':1}
 		d_init_grap = {}	
@@ -129,11 +206,11 @@ if __name__ == '__main__':
 
 	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax) 
 
-	print r.g.d_state_type
-	print r.g.d_pair
+	# print r.g.d_state_type
+	# print r.g.d_pair
 	print r.gillespie()
-	print r.g.d_state_type
-	print r.g.d_pair
-
+	# print r.g.d_state_type
+	# print r.g.d_pair
 	end = time.time()
 	print end - start
+	plt.show(block=True)
