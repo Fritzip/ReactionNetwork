@@ -2,6 +2,7 @@ import math
 import random
 import numpy as np
 import time
+import sys
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
@@ -17,6 +18,11 @@ class Reactor():
 		self.kconf = kconf
 		self.kcoll = kcoll
 		self.tmax = tmax
+
+		self.time_vect = []
+		self.d_y_evol_type = {}
+		self.d_y_evol_pair = {}
+
 
 	@classmethod
 	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax):
@@ -59,53 +65,24 @@ class Reactor():
 		self.g.recompute_all()
 		return id_pair
 
-	# def update_y(self, d_y_evol, part_type, nb, size, d_col ):
-	# 	if part_type not in d_y_evol.keys():
-	# 		d_y_evol[part_type] = [0]*(size)
-	# 		# d_col[part_type] = COL
-	# 	d_y_evol[part_type].append(nb)
-
-	def compute_plot_dict(self, d_y_evol, d_part, size, d_col, col_count ):
+	def compute_plot_dict(self, d_y_evol, d_part, size ):
 		d_length = {key: len(value) for key, value in d_part.items()}
 
 		for part_type in d_y_evol.keys():
 			if part_type not in d_length.keys():
 				d_length[part_type] = 0
-			if part_type not in d_col.keys():
-				d_col[part_type] = col_count
-				col_count += 1
 
 		for part_type in d_length.keys():
 			if part_type not in d_y_evol.keys():
 				d_y_evol[part_type] = [0]*(size)
 			d_y_evol[part_type].append(d_length[part_type])
 
-			if part_type not in d_col.keys():
-				d_col[part_type] = col_count
-				col_count += 1
-
-
-			# self.update_y(d_y_evol, part_type, d_length[part_type], size, d_col)
-
-
 	def gillespie( self ):
-		ECHO = 0;
-		PLOT = 0;
-		SMOOTH = 1;
+		ECHO = 0
+		PLOT = 0
 		t = 0
-		time_vect = []
-		nb_part = len(self.g.l_particles)
-
-		if PLOT:
-			plt.ion()
-			
-			col_count_type = 0
-			col_count_pair = 0
-			d_col_type = {}
-			d_col_pair = {}
-
-			d_y_evol_type = {}
-			d_y_evol_pair = {}
+		
+		# plt.ion()
 
 		while t < self.tmax:
 			ai = [ self.compute_speed(rule) for rule in self.l_rules ]
@@ -119,55 +96,103 @@ class Reactor():
 				mv += ai[n]/sumai
 				n += 1
 
-			pair = self.apply_reaction(self.l_rules[n-1])
-			if ECHO and pair != -1:
+			id_part = self.apply_reaction(self.l_rules[n-1])
+			# print t
+			update_progress("Progression", t, self.tmax, "sec")
+			# display_elapsed_time(t, self.tmax)
+			if ECHO and id_part != -1:
 				print "############ t = %.3f ###########" % t
 				print "# ai = ", ai
 				print "# reac = ", self.l_rules[n-1].rule
-				print "# id = ", pair
+				print "# id = ", id_part
 				print "#", r.g.d_state_type
 				print "#", r.g.d_pair
 				print "##################################\n\n"
 
+			self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )
+			self.compute_plot_dict( self.d_y_evol_pair, self.g.d_pair, len(self.time_vect) )
+			self.time_vect.append(t)
 
-			if PLOT:
-				self.compute_plot_dict( d_y_evol_type, self.g.d_state_type, len(time_vect), d_col_type, col_count_type )
-				self.compute_plot_dict( d_y_evol_pair, self.g.d_pair, len(time_vect), d_col_pair, col_count_pair )
-				time_vect.append(t)
-				plt.figure(1)
-				plt.pause(0.00001)
-				plt.cla()
-				for key in d_y_evol_type.keys():
-					plt.plot(time_vect, d_y_evol_type[key], linewidth=2, label=key)
-					plt.legend()
+			# if PLOT:
+			# 	plt.figure(1)
+			# 	plt.pause(0.0000001)
+			# 	plt.cla()
+			# 	for key in r.d_y_evol_type.keys():
+			# 		x, y = r.time_vect, r.d_y_evol_type[key]
+			# 		plt.plot(x, y, linewidth=2, label=key)
+			# 	plt.legend(loc='best')
+			# 	plt.draw()
+			# 	plt.xlim([0, t*1.2])
+			# 	plt.ylim([0, plt.ylim()[1]])
 
-				plt.draw()
-				plt.xlim([0, t+5])
-				plt.ylim(0, plt.ylim()[1])
-
-				plt.figure(2)
-				plt.pause(0.00001)
-				plt.cla()
-				for key in d_y_evol_pair.keys():
-					plt.plot(time_vect, d_y_evol_pair[key], linewidth=2, label=key)
-					plt.legend()
-
-				plt.draw()
-
-				plt.xlim([0, t+5])
-				plt.ylim(0, plt.ylim()[1])
+			# 	plt.figure(2)
+			# 	plt.pause(0.0000001)
+			# 	plt.cla()
+			# 	for key in r.d_y_evol_pair.keys():
+			# 		x, y = r.time_vect, r.d_y_evol_pair[key]
+			# 		plt.plot(x, y, linewidth=2, label=key)
+			# 	plt.legend(loc='best')
+			# 	plt.draw()
+			# 	plt.xlim([0, t*1.2])
+			# 	plt.ylim([0, plt.ylim()[1]])
 
 		return t
 		
+def smoothinterp(t, y):
+	window_size = 31
+	order = 1
+
+	tnew = np.linspace(t[0], t[-1], 400)
+	f = interp1d(t, y, kind='linear')
+	y = f(tnew)
+
+	y = savitzky_golay(y, window_size, order)
+
+	return tnew, y
+
+def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+	import numpy as np
+	from math import factorial
+
+	try:
+		window_size = np.abs(np.int(window_size))
+		order = np.abs(np.int(order))
+	except ValueError, msg:
+		raise ValueError("window_size and order have to be of type int")
+	if window_size % 2 != 1 or window_size < 1:
+		raise TypeError("window_size size must be a positive odd number")
+	if window_size < order + 2:
+		raise TypeError("window_size is too small for the polynomials order")
+	order_range = range(order+1)
+	half_window = (window_size -1) // 2
+	# precompute coefficients
+	b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+	m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
+	firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
+	lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
+	y = np.concatenate((firstvals, y, lastvals))
+	return np.convolve( m[::-1], y, mode='valid')
+
+def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medium 25, large 50
+	progress = int(nb*100/nbmax)
+	if progress > 100 : progress = 100
+	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.3f}/{4:.3f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
+	sys.stdout.flush()
+
+
+def quit_figure(event):
+	if event.key == 'q' or event.key == 'escape':
+		plt.close('all')
+
 if __name__ == '__main__':
 	start = time.time()
 
 	N = 200
 	kcoll = 0.2
 	kconf = 0.7
-	tmax = 100
+	tmax = 10
 
-	test = 4
+	test = 3
 	if test == 1:
 		d_init_part = {'a0':N, 'a1':1}
 		d_init_grap = {}	
@@ -193,13 +218,13 @@ if __name__ == '__main__':
 		l_type = ['a']
 
 	if test == 5:
-		d_init_part = {'a0':N, 'b0':N, 'b1':1}
+		d_init_part = {'a0':N, 'a1':10, 'b0':N, 'b1':10, 'c0':N, 'c1':10}
 		d_init_grap = {}	
-		l_rules = ['*0+*1=*2*2']
+		l_rules = ['*0+*1=*2*2', '*0+#2=*1#2', '*2#2=*2+#1']
 		l_type = ['a', 'b', 'c']
 
 	if test == 6:
-		d_init_part = {'a0':N, 'b0':N, 'b1':1}
+		d_init_part = {'a0':N, 'a1':10, 'b0':N, 'b1':10, 'c0':N, 'c1':10}
 		d_init_grap = {}	
 		l_rules = ['*0+#1=*0#1']
 		l_type = ['a', 'b', 'c']
@@ -208,9 +233,38 @@ if __name__ == '__main__':
 
 	# print r.g.d_state_type
 	# print r.g.d_pair
-	print r.gillespie()
+	print "t = ", r.gillespie()
 	# print r.g.d_state_type
 	# print r.g.d_pair
+
 	end = time.time()
 	print end - start
-	plt.show(block=True)
+
+
+	PLOT = 1
+	SMOOTH = 1
+
+	fig = plt.figure()
+
+	cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
+
+	if PLOT:
+		plt1 = fig.add_subplot(1,2,1)
+		for key in r.d_y_evol_type.keys():
+			x, y = r.time_vect, r.d_y_evol_type[key]
+			try:
+				if SMOOTH: x, y = smoothinterp(x, y) 
+			except: pass
+			plt.plot(x, y, linewidth=2, label=key)
+		plt.legend(loc='best')
+
+		plt2 = fig.add_subplot(1,2,2)
+		for key in r.d_y_evol_pair.keys():
+			x, y = r.time_vect, r.d_y_evol_pair[key]
+			try:
+				if SMOOTH:x, y = smoothinterp(x, y) 
+			except: pass
+			plt.plot(x, y, linewidth=2, label=key)
+		plt.legend(loc='best')
+
+		plt.show(block=True)
