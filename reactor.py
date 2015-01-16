@@ -82,8 +82,6 @@ class Reactor():
 		PLOT = 0
 		t = 0
 		
-		# plt.ion()
-
 		while t < self.tmax:
 			ai = [ self.compute_speed(rule) for rule in self.l_rules ]
 			sumai = sum(ai)
@@ -97,9 +95,8 @@ class Reactor():
 				n += 1
 
 			id_part = self.apply_reaction(self.l_rules[n-1])
-			# print t
 			update_progress("Progression", t, self.tmax, "sec")
-			# display_elapsed_time(t, self.tmax)
+
 			if ECHO and id_part != -1:
 				print "############ t = %.3f ###########" % t
 				print "# ai = ", ai
@@ -112,29 +109,6 @@ class Reactor():
 			self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )
 			self.compute_plot_dict( self.d_y_evol_pair, self.g.d_pair, len(self.time_vect) )
 			self.time_vect.append(t)
-
-			# if PLOT:
-			# 	plt.figure(1)
-			# 	plt.pause(0.0000001)
-			# 	plt.cla()
-			# 	for key in r.d_y_evol_type.keys():
-			# 		x, y = r.time_vect, r.d_y_evol_type[key]
-			# 		plt.plot(x, y, linewidth=2, label=key)
-			# 	plt.legend(loc='best')
-			# 	plt.draw()
-			# 	plt.xlim([0, t*1.2])
-			# 	plt.ylim([0, plt.ylim()[1]])
-
-			# 	plt.figure(2)
-			# 	plt.pause(0.0000001)
-			# 	plt.cla()
-			# 	for key in r.d_y_evol_pair.keys():
-			# 		x, y = r.time_vect, r.d_y_evol_pair[key]
-			# 		plt.plot(x, y, linewidth=2, label=key)
-			# 	plt.legend(loc='best')
-			# 	plt.draw()
-			# 	plt.xlim([0, t*1.2])
-			# 	plt.ylim([0, plt.ylim()[1]])
 
 		return t
 		
@@ -189,10 +163,10 @@ if __name__ == '__main__':
 
 	N = 200
 	kcoll = 0.2
-	kconf = 0.7
-	tmax = 10
+	kconf = 0.8
+	tmax = 100
 
-	test = 3
+	test = 7
 	if test == 1:
 		d_init_part = {'a0':N, 'a1':1}
 		d_init_grap = {}	
@@ -229,11 +203,18 @@ if __name__ == '__main__':
 		l_rules = ['*0+#1=*0#1']
 		l_type = ['a', 'b', 'c']
 
+	if test == 7:
+		l_type = ['a', 'b', 'c', 'd', 'e', 'f']
+		d_init_part = {'a0':N/6, 'b0':N/6, 'c0':N/6, 'd0':N/6, 'e0':N/6, 'f0':N/6}
+		d_init_grap = {"e8-a1-b1-c1-d1-f1":1}	
+		l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8#8']
+
 	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax) 
 
-	# print r.g.d_state_type
-	# print r.g.d_pair
-	print "t = ", r.gillespie()
+	print r.g.d_state_type
+	print r.g.d_pair
+	t = r.gillespie()
+	if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
 	# print r.g.d_state_type
 	# print r.g.d_pair
 
@@ -245,7 +226,6 @@ if __name__ == '__main__':
 	SMOOTH = 1
 
 	fig = plt.figure()
-
 	cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
 
 	if PLOT:

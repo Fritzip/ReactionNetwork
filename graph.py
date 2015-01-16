@@ -14,30 +14,50 @@ class Graph():
 	@classmethod
 	def from_particles_init(cls, d_init_part, d_init_graph):
 		"""Initialize particle from init dictionary of particles"""
-		nb_part = sum(d_init_part.values())
 
 		id_part = 0
 		part = []
-		for stype in d_init_part.keys():
+		connect = []
+		d = {}
+
+		for interaction in d_init_graph.keys():
+			l_init_graph = interaction.replace(' ', '').split('-')
 			i = 0
+			nb_graph = d_init_graph[interaction]
+			print nb_graph
+			while i < nb_graph:
+				n = len(l_init_graph) - 1
+				for j in range(n):
+					connect.append((id_part, id_part+1))
+					part.append( Particle.from_stype(id_part, l_init_graph[j]) )
+					increment_dict(d, l_init_graph[j])
+					id_part += 1
+					print d
+				part.append( Particle.from_stype(id_part, l_init_graph[-1]) )
+				increment_dict(d, l_init_graph[-1])
+				i += 1 
+
+
+
+
+		for stype in d_init_part.keys():
+			try : i = d[stype]
+			except KeyError: i = 0
+
 			nb_st_part = d_init_part[stype]
 			while i < nb_st_part:
 				part.append( Particle.from_stype(id_part, stype) )		
 				i += 1
 				id_part += 1
 
-		mat = np.zeros((nb_part, nb_part))
-
-		# for interaction in d_init_part.keys():
-		# 	i = 0
-		# 	nb_st_part = d_init_part[stype]
-		# 	while i < nb_st_part:
-		# 		part.append( Particle.from_stype(id_part, stype) )		
-		# 		i += 1
-		# 		id_part += 1
+		mat = np.zeros((id_part+1, id_part+1))
+		n = len(connect)
+		for pair in range(n):
+			i, j = connect[pair] 
+			mat[i][j] = 1
+			mat[j][i] = 1
 
 		return cls(part, mat)
-
 
 
 	def compute_d_state_type(self):
@@ -93,10 +113,18 @@ def rm_from_dict(d, key, value):
 		del d[key]
 
 def add_to_dict(d, key, value):
-	if key in d.keys():
+	# if key in d.keys():
+	try :
 		d[key].append(value)
-	else:
+	# else:
+	except KeyError:
 		d[key] = [value]
+
+def increment_dict(d, key):
+	try:
+		d[key] += 1
+	except KeyError:
+		d[key] = 1
 
 def make_key_and_id_pair(type1, type2, id1, id2):
 	if type1 > type2:
