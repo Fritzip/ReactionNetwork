@@ -25,9 +25,9 @@ class Reactor():
 
 
 	@classmethod
-	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax):
+	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax, U):
 		"""Initialize reactor from init dictionary of particles and interactions"""
-		return cls(Graph.from_particles_init(d_init_part, d_init_graph), RuleGenerator(l_regex_rules, l_type).l_rules, kconf, kcoll, tmax)
+		return cls(Graph.from_particles_init(d_init_part, d_init_graph, U), RuleGenerator(l_regex_rules, l_type).l_rules, kconf, kcoll, tmax)
 
 	def compute_speed( self, rule ):
 		if rule.op[0] == '+':
@@ -95,7 +95,7 @@ class Reactor():
 				n += 1
 
 			id_part = self.apply_reaction(self.l_rules[n-1])
-			update_progress("Progression", t, self.tmax, "sec")
+			update_progress("Progression", t, self.tmax, "time unit")
 
 			if ECHO and id_part != -1:
 				print "############ t = %.3f ###########" % t
@@ -109,6 +109,8 @@ class Reactor():
 			self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )
 			self.compute_plot_dict( self.d_y_evol_pair, self.g.d_pair, len(self.time_vect) )
 			self.time_vect.append(t)
+
+			# time.sleep(0.01)
 
 		return t
 		
@@ -162,11 +164,25 @@ if __name__ == '__main__':
 	start = time.time()
 
 	N = 200
-	kcoll = 0.2
-	kconf = 0.8
-	tmax = 100
+	kcoll = 0.01
+	kconf = 0.9
+	tmax = 1000
 
-	test = 7
+	GRAPH = 1
+	if GRAPH:
+		import subprocess
+		bashCommand = "./ubigraph_server &"
+		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+		# output = process.communicate()[0]
+		time.sleep(1)
+		
+		import ubigraph
+		U = ubigraph.Ubigraph()
+		U.clear()
+		
+
+
+	test = 6
 	if test == 1:
 		d_init_part = {'a0':N, 'a1':1}
 		d_init_grap = {}	
@@ -206,27 +222,27 @@ if __name__ == '__main__':
 	if test == 7:
 		l_type = ['a', 'b', 'c', 'd', 'e', 'f']
 		d_init_part = {'a0':N/6, 'b0':N/6, 'c0':N/6, 'd0':N/6, 'e0':N/6, 'f0':N/6}
-		d_init_grap = {"e8-a1-b1-c1-d1-f1":1}	
+		d_init_grap = {"e8-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1":1}	
 		l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8#8']
 
-	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax) 
+	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, U) 
 
 	print r.g.d_state_type
 	print r.g.d_pair
 	t = r.gillespie()
 	if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
-	# print r.g.d_state_type
-	# print r.g.d_pair
+	print r.g.d_state_type
+	print r.g.d_pair
 
 	end = time.time()
 	print end - start
 
-
-	PLOT = 1
+	PLOT = 0
 	SMOOTH = 1
 
 	fig = plt.figure()
 	cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
+
 
 	if PLOT:
 		plt1 = fig.add_subplot(1,2,1)

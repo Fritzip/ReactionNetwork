@@ -1,44 +1,45 @@
 import numpy as np
 import random
-
+import ubigraph
 from particle import *
 
 class Graph():
 	"""Interactions between particles"""
-	def __init__(self, l_particles, m_adj):
+	def __init__(self, l_particles, m_adj, U=None, l_vert=[], d_edges={}):
 		self.l_particles = l_particles
+		self.l_vert = l_vert
 		self.d_state_type = self.compute_d_state_type()
 		self.m_adj = m_adj
 		self.d_pair = self.compute_d_pair()
+		if U != None:
+			self.U = U
+			self.l_vert = l_vert
+			self.d_edges = d_edges
 
 	@classmethod
-	def from_particles_init(cls, d_init_part, d_init_graph):
+	def from_particles_init(cls, d_init_part, d_init_graph, U=None):
 		"""Initialize particle from init dictionary of particles"""
 
 		id_part = 0
-		part = []
-		connect = []
+		l_part = []
+		l_connect = []
 		d = {}
+		d_edges = {}
+		l_vert = []
 
 		for interaction in d_init_graph.keys():
 			l_init_graph = interaction.replace(' ', '').split('-')
 			i = 0
 			nb_graph = d_init_graph[interaction]
-			print nb_graph
 			while i < nb_graph:
-				n = len(l_init_graph) - 1
-				for j in range(n):
-					connect.append((id_part, id_part+1))
-					part.append( Particle.from_stype(id_part, l_init_graph[j]) )
+				for j in range(len(l_init_graph) - 1):
+					l_connect.append((id_part, id_part+1))
+					l_part.append( Particle.from_stype(id_part, l_init_graph[j]) )
 					increment_dict(d, l_init_graph[j])
 					id_part += 1
-					print d
-				part.append( Particle.from_stype(id_part, l_init_graph[-1]) )
+				l_part.append( Particle.from_stype(id_part, l_init_graph[-1]) )
 				increment_dict(d, l_init_graph[-1])
 				i += 1 
-
-
-
 
 		for stype in d_init_part.keys():
 			try : i = d[stype]
@@ -46,18 +47,23 @@ class Graph():
 
 			nb_st_part = d_init_part[stype]
 			while i < nb_st_part:
-				part.append( Particle.from_stype(id_part, stype) )		
+				l_part.append( Particle.from_stype(id_part, stype) )	
 				i += 1
 				id_part += 1
 
+		if U != None:
+			for part in l_part:
+				l_vert.append( U.newVertex(  ) ) #label = part.stype()
+
 		mat = np.zeros((id_part+1, id_part+1))
-		n = len(connect)
-		for pair in range(n):
-			i, j = connect[pair] 
+		for pair in range(len(l_connect)):
+			i, j = l_connect[pair] 
 			mat[i][j] = 1
 			mat[j][i] = 1
+			if U != None:
+				d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j])
 
-		return cls(part, mat)
+		return cls(l_part, mat, U, l_vert, d_edges)
 
 
 	def compute_d_state_type(self):
@@ -87,11 +93,22 @@ class Graph():
 		""" Link two particles (defined by there id) according to the given rule """
 		self.m_adj[id_part0][id_part1] = 1
 		self.m_adj[id_part1][id_part0] = 1
+		# print id_part0, id_part1
+		if self.U != None:
+			# print self.d_edges
+			# print self.l_vert
+			self.d_edges[make_tpl(id_part0, id_part1)] = self.U.newEdge(self.l_vert[id_part0], self.l_vert[id_part1])
+			# self.d_edges[make_tpl(id_part0, id_part1)] = 1
+
 
 	def unlink(self, pair, key, rule):
 		""" Unink two particles (defined by a pair of id) according to the given rule """
 		self.m_adj[pair[0]][pair[1]] = 0
 		self.m_adj[pair[1]][pair[0]] = 0
+		# print pair
+		if self.U != None:
+			# print self.d_edges
+			self.d_edges[make_tpl(pair[0], pair[1])].destroy()
 
 	def modify_state_of_pair(self, pair, rule):
 		if rule.is_state_modified( 0 ) : self.change_part_state(pair[0], rule.get_final_state(0))
@@ -134,6 +151,9 @@ def make_key_and_id_pair(type1, type2, id1, id2):
 
 def make_key_pair(type1, type2):
 	return type1+type2 if type1 > type2 else type2 + type1
+
+def make_tpl(int1, int2):
+	return (int1, int2) if int1 > int2 else (int2, int1)
 
 
 if __name__ == '__main__':
