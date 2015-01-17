@@ -4,7 +4,7 @@ import random
 import ubigraph
 from particle import *
 from globals import *
-
+ 
 class Graph():
 	"""Interactions between particles"""
 	def __init__(self, l_particles, m_adj, f):
@@ -33,12 +33,14 @@ class Graph():
 			i = 0
 			nb_graph = d_init_graph[interaction]
 			while i < nb_graph:
+				print "i =", i
 				for j in range(len(l_init_graph) - 1):
 					l_connect.append((id_part, id_part+1))
 					l_part.append( Particle.from_stype(id_part, l_init_graph[j]) )
 					increment_dict(d, l_init_graph[j])
 					id_part += 1
 				l_part.append( Particle.from_stype(id_part, l_init_graph[-1]) )
+				id_part += 1
 				increment_dict(d, l_init_graph[-1])
 				i += 1 
 
@@ -60,6 +62,8 @@ class Graph():
 			map(lambda x: f.write('%s ' % x.stype()), l_part )
 			f.write('\n')
 
+		print "idpart = ", id_part
+		print "len(l_part) = ", len(l_part)
 		mat = np.zeros((id_part+1, id_part+1))
 		for pair in range(len(l_connect)):
 			i, j = l_connect[pair] 
@@ -68,6 +72,7 @@ class Graph():
 			if SAVE: f.write("%s %s %s\n" % (i, j, 1))
 			# if VISU:
 				# d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j])
+		# print mat
 
 		return cls(l_part, mat, f)
 

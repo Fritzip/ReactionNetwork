@@ -1,7 +1,6 @@
 import time
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-import colorsys
 
 from reactor import *
 import ubigraph
@@ -11,10 +10,10 @@ import ubigraph
 #			Initialisation
 ####################################################################
 
-N = 200
+N = 20
 kcoll = 0.1
 kconf = 0.9
-tmax = 1000
+tmax = 100
 
 test = 6
 if test == 1:
@@ -49,14 +48,14 @@ if test == 5:
 
 if test == 6:
 	d_init_part = {'a0':N, 'a1':10, 'b0':N, 'b1':10, 'c0':N, 'c1':10}
-	d_init_grap = {}	
-	l_rules = ['*0+#1=*0#1']
+	d_init_grap = {"a0-a1":5, "b0-b1":5, "c0-c1":5}	
+	l_rules = ['*0+#1=*0#1', '*0#1=*2+#0']
 	l_type = ['a', 'b', 'c']
 
 if test == 7:
 	l_type = ['a', 'b', 'c', 'd', 'e', 'f']
 	d_init_part = {'a0':N/6, 'b0':N/6, 'c0':N/6, 'd0':N/6, 'e0':N/6, 'f0':N/6}
-	d_init_grap = {"e8-a1-b1-c1-d1-f1":1}	
+	d_init_grap = {"e8-a1-b1-c1-d1-f1":3}	
 	l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8#8']
 
 
@@ -68,15 +67,11 @@ start = time.time()
 
 r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, f) 
 
-# print r.g.d_state_type
-# print r.g.d_pair
 t = r.gillespie()
 if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
-# print r.g.d_state_type
-# print r.g.d_pair
 
 end = time.time()
-print end - start
+print "Execution time : %.3f sec" % (end - start)
 
 f.close()
 
@@ -100,12 +95,15 @@ if VISU and SAVE:
 	l_vert = []
 	d_edges = {}
 
+	d_col = {l_type[i] : COLORS[i] for i in range(len(l_type))}
+
 	f = open('simu', 'r')
 	l_part = f.readline().split()
-	for i, part in enumerate(l_part):
+	for i, stype in enumerate(l_part):
 		d_adj[i] = 0
-		d_state[i] = int(part[1])
-		l_vert.append( U.newVertex( visible = True, shape = "sphere" ) )
+		d_state[i] = int(stype[1])
+		col = get_col(d_col[stype[0]], stype[1])
+		l_vert.append( U.newVertex( visible = True, shape = "sphere", color = col ) )
 
 	for line in f:
 		time.sleep(0.01)
@@ -113,7 +111,7 @@ if VISU and SAVE:
 		if abs(k) == 1:
 			d_adj[i] += k
 			d_adj[j] += k
-			if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j])
+			if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j], width = 3, color = '#FFFFFF', strength = 0.3)
 			elif k == -1: d_edges[make_tpl(i,j)].destroy()
 			# opt : mod size vert and visibility
 			# if d_adj[i] : l_vert[i].set(visible=True)
@@ -130,8 +128,6 @@ if VISU and SAVE:
 	# print l_part
 	# print d_adj
 	# print d_state
-
-
 
 if PLOT:
 	fig = plt.figure()
@@ -156,45 +152,3 @@ if PLOT:
 	plt.legend(loc='best')
 
 	plt.show(block=True)
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def quit_figure(event):
-	if event.key == 'q' or event.key == 'escape':
-		plt.close('all')
-
-def smoothinterp(t, y):
-	window_size = 31
-	order = 1
-
-	tnew = np.linspace(t[0], t[-1], 400)
-	f = interp1d(t, y, kind='linear')
-	y = f(tnew)
-
-	y = savitzky_golay(y, window_size, order)
-
-	return tnew, y
-
-def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-	import numpy as np
-	from math import factorial
-
-	try:
-		window_size = np.abs(np.int(window_size))
-		order = np.abs(np.int(order))
-	except ValueError, msg:
-		raise ValueError("window_size and order have to be of type int")
-	if window_size % 2 != 1 or window_size < 1:
-		raise TypeError("window_size size must be a positive odd number")
-	if window_size < order + 2:
-		raise TypeError("window_size is too small for the polynomials order")
-	order_range = range(order+1)
-	half_window = (window_size -1) // 2
-	# precompute coefficients
-	b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
-	m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
-	firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
-	lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
-	y = np.concatenate((firstvals, y, lastvals))
-	return np.convolve( m[::-1], y, mode='valid')

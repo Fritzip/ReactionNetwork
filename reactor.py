@@ -7,7 +7,6 @@ import sys
 from rule import *
 from graph import *
 
-
 class Reactor():
 	"""Init and run Gillespie algorithm"""
 	def __init__(self, graph, l_rules, kcoll, kconf, tmax):
