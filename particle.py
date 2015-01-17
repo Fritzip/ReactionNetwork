@@ -18,6 +18,7 @@ class Particle():
 	def __repr__(self):
 		return "(%d, %s)" % (self.id, self.stype())
 
+
 if __name__ == '__main__':
 	p = Particle(4, 'a', 0)
 	print p

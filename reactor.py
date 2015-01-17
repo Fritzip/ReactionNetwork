@@ -3,8 +3,6 @@ import random
 import numpy as np
 import time
 import sys
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 
 from rule import *
 from graph import *
@@ -25,9 +23,9 @@ class Reactor():
 
 
 	@classmethod
-	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax, U):
+	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax, f):
 		"""Initialize reactor from init dictionary of particles and interactions"""
-		return cls(Graph.from_particles_init(d_init_part, d_init_graph, U), RuleGenerator(l_regex_rules, l_type).l_rules, kconf, kcoll, tmax)
+		return cls(Graph.from_particles_init(d_init_part, d_init_graph, f), RuleGenerator(l_regex_rules, l_type).l_rules, kconf, kcoll, tmax)
 
 	def compute_speed( self, rule ):
 		if rule.op[0] == '+':
@@ -78,8 +76,6 @@ class Reactor():
 			d_y_evol[part_type].append(d_length[part_type])
 
 	def gillespie( self ):
-		ECHO = 0
-		PLOT = 0
 		t = 0
 		
 		while t < self.tmax:
@@ -95,7 +91,7 @@ class Reactor():
 				n += 1
 
 			id_part = self.apply_reaction(self.l_rules[n-1])
-			update_progress("Progression", t, self.tmax, "time unit")
+			update_progress("Progression", t, self.tmax, "time.unit.")
 
 			if ECHO and id_part != -1:
 				print "############ t = %.3f ###########" % t
@@ -106,161 +102,19 @@ class Reactor():
 				print "#", r.g.d_pair
 				print "##################################\n\n"
 
-			self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )
-			self.compute_plot_dict( self.d_y_evol_pair, self.g.d_pair, len(self.time_vect) )
-			self.time_vect.append(t)
-
-			# time.sleep(0.01)
+			if PLOT:
+				self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )
+				self.compute_plot_dict( self.d_y_evol_pair, self.g.d_pair, len(self.time_vect) )
+				self.time_vect.append(t)
 
 		return t
-		
-def smoothinterp(t, y):
-	window_size = 31
-	order = 1
 
-	tnew = np.linspace(t[0], t[-1], 400)
-	f = interp1d(t, y, kind='linear')
-	y = f(tnew)
-
-	y = savitzky_golay(y, window_size, order)
-
-	return tnew, y
-
-def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-	import numpy as np
-	from math import factorial
-
-	try:
-		window_size = np.abs(np.int(window_size))
-		order = np.abs(np.int(order))
-	except ValueError, msg:
-		raise ValueError("window_size and order have to be of type int")
-	if window_size % 2 != 1 or window_size < 1:
-		raise TypeError("window_size size must be a positive odd number")
-	if window_size < order + 2:
-		raise TypeError("window_size is too small for the polynomials order")
-	order_range = range(order+1)
-	half_window = (window_size -1) // 2
-	# precompute coefficients
-	b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
-	m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
-	firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
-	lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
-	y = np.concatenate((firstvals, y, lastvals))
-	return np.convolve( m[::-1], y, mode='valid')
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medium 25, large 50
 	progress = int(nb*100/nbmax)
 	if progress > 100 : progress = 100
-	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.3f}/{4:.3f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
+	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.2f}/{4:.2f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
 	sys.stdout.flush()
 
-
-def quit_figure(event):
-	if event.key == 'q' or event.key == 'escape':
-		plt.close('all')
-
-if __name__ == '__main__':
-	start = time.time()
-
-	N = 200
-	kcoll = 0.01
-	kconf = 0.9
-	tmax = 1000
-
-	GRAPH = 1
-	if GRAPH:
-		import subprocess
-		bashCommand = "./ubigraph_server &"
-		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-		# output = process.communicate()[0]
-		time.sleep(1)
-		
-		import ubigraph
-		U = ubigraph.Ubigraph()
-		U.clear()
-		
-
-
-	test = 6
-	if test == 1:
-		d_init_part = {'a0':N, 'a1':1}
-		d_init_grap = {}	
-		l_rules = ['a0+a1=a2a1']
-		l_type = ['a']
-		
-	if test == 2:
-		d_init_part = {'a0':N, 'a1':1}
-		d_init_grap = {}	
-		l_rules = ['a0+a1=a1a2']
-		l_type = ['a']
-		
-	if test == 3:
-		d_init_part = {'a0':N, 'b0':N, 'b1':1}
-		d_init_grap = {}	
-		l_rules = ['a0+b1=a1b2', 'a1b3=a2b2', 'a0+a1=a2a1', 'b2+b0=b3b2' ]
-		l_type = ['a', 'b']
-
-	if test == 4:
-		d_init_part = {'a0':N, 'a1':1}
-		d_init_grap = {}	
-		l_rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1']
-		l_type = ['a']
-
-	if test == 5:
-		d_init_part = {'a0':N, 'a1':10, 'b0':N, 'b1':10, 'c0':N, 'c1':10}
-		d_init_grap = {}	
-		l_rules = ['*0+*1=*2*2', '*0+#2=*1#2', '*2#2=*2+#1']
-		l_type = ['a', 'b', 'c']
-
-	if test == 6:
-		d_init_part = {'a0':N, 'a1':10, 'b0':N, 'b1':10, 'c0':N, 'c1':10}
-		d_init_grap = {}	
-		l_rules = ['*0+#1=*0#1']
-		l_type = ['a', 'b', 'c']
-
-	if test == 7:
-		l_type = ['a', 'b', 'c', 'd', 'e', 'f']
-		d_init_part = {'a0':N/6, 'b0':N/6, 'c0':N/6, 'd0':N/6, 'e0':N/6, 'f0':N/6}
-		d_init_grap = {"e8-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1-a1-b1-c1-d1-f1":1}	
-		l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8#8']
-
-	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, U) 
-
-	print r.g.d_state_type
-	print r.g.d_pair
-	t = r.gillespie()
-	if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
-	print r.g.d_state_type
-	print r.g.d_pair
-
-	end = time.time()
-	print end - start
-
-	PLOT = 0
-	SMOOTH = 1
-
-	fig = plt.figure()
-	cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
-
-
-	if PLOT:
-		plt1 = fig.add_subplot(1,2,1)
-		for key in r.d_y_evol_type.keys():
-			x, y = r.time_vect, r.d_y_evol_type[key]
-			try:
-				if SMOOTH: x, y = smoothinterp(x, y) 
-			except: pass
-			plt.plot(x, y, linewidth=2, label=key)
-		plt.legend(loc='best')
-
-		plt2 = fig.add_subplot(1,2,2)
-		for key in r.d_y_evol_pair.keys():
-			x, y = r.time_vect, r.d_y_evol_pair[key]
-			try:
-				if SMOOTH:x, y = smoothinterp(x, y) 
-			except: pass
-			plt.plot(x, y, linewidth=2, label=key)
-		plt.legend(loc='best')
-
-		plt.show(block=True)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	
