@@ -3,7 +3,7 @@
 
 import random
 import sys
-import os.path
+import os
 import argparse
 import struct
 from datetime import datetime
@@ -76,12 +76,12 @@ def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medi
 ####################################################################
 # For plots
 HEADER = '\033[1m' # bold
-OKBLUE = '\033[94m' # blue
-OKGREEN = '\033[92m' # green
-WARNING = '\033[93m' # yellow
-FAIL = '\033[91m' # red
+KBLU = '\033[94m' # blue
+KGRN = '\033[92m' # green
+KYEL = '\033[93m' # yellow
+KRED = '\033[91m' # red
 UNDERLINE = '\033[4m'
-ENDC = '\033[0m' # back to normal
+KNRM = '\033[0m' # back to normal
 
 # For graph
 COLORS = [(230, 41, 41), (189, 41, 230), (50, 41, 230), (41, 183, 230), (41, 230, 88), (221, 230, 41), (230, 164, 41)]
@@ -115,11 +115,9 @@ parser.add_argument("-x","--novisu", action="store_true", default=0, help="Disab
 filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a file", metavar="FILE", type=lambda x: is_valid_file(parser, x))
 
 DEF_OFILE = '../DATA/simulation'+datetime.now().strftime('%H:%M:%S')
-filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", metavar="FILE", default=DEF_OFILE)
+filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", nargs='?', metavar="FILE", default=DEF_OFILE)
 
 args = parser.parse_args()
-
-print args
 
 if args.verbose:
 	ECHO=True
@@ -139,10 +137,13 @@ if args.plot:
 
 if args.inputfile:
 	RUN = False
-	SAVE = False
 	PATH = args.inputfile
-else :
+elif args.outputfile == DEF_OFILE:
 	PATH = args.outputfile
-
-if args.outputfile == DEF_OFILE:
 	SAVE = False
+else :
+	PATH = DEF_OFILE
+
+
+if not os.path.exists("../DATA"):
+	os.makedirs("../DATA")

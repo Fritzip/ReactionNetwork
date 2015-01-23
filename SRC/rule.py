@@ -69,7 +69,7 @@ class RuleGenerator():
 			self.l_regex_rules.pop(0)
 
 		self.l_rules = list(set(self.l_rules))
-		print self.l_rules
+		# print self.l_rules
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

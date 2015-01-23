@@ -12,12 +12,12 @@ import ubigraph
 #			Initialisation
 ####################################################################
 
-N = 40
-kcoll = 0.01
+N = 5
+kcoll = 0.001
 kconf = 0.9
-tmax = 100
+tmax = 100000
 
-test = 4
+test = 7
 if test == 1:
 	d_init_part = {'a0':N, 'a1':1}
 	d_init_grap = {}	
@@ -71,10 +71,10 @@ if RUN:
 	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, f) 
 
 	t = r.gillespie()
-	if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
+	if t < tmax : print "\n%sOut before end of time. Cause : no more reaction available%s" %(KYEL, KNRM)
 
 	end = time.time()
-	print "Execution time : %.3f sec" % (end - start)
+	print "%sExecution time : %.3f sec%s" % (KGRN, end - start, KNRM)
 
 	f.close()
 
@@ -148,3 +148,6 @@ if PLOT:
 	plt.legend(loc='best')
 
 	plt.show(block=True)
+
+
+if not SAVE : os.remove(PATH)
