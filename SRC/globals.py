@@ -13,7 +13,6 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 
-
 ####################################################################
 #			Global functions
 ####################################################################
@@ -102,7 +101,8 @@ PROGRESS = True
 N = 5
 kcoll = 0.001
 kconf = 0.9
-tmax = 100000
+tmax = 20000
+tsleep = 0.01
 
 ####################################################################
 #			Arguments parser
@@ -123,13 +123,12 @@ filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a fi
 filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", nargs='?', metavar="FILE", const=DEFAULT_FILE)
 
 parser.add_argument('-t', '--tmax', type=int, default=tmax, help = " Modify init value of tmax (default : %(default)s)" )
-parser.add_argument('-n', type=int, default=N, help = " Modify init value of N (default : %(default)s)" )
+parser.add_argument('-n', type=int, default=N, help = " Modify init value of N (nb_particles) (default : %(default)s)" )
 parser.add_argument('--kcoll', type=float, default=kcoll, help = " Modify init value of kcoll (default : %(default)s)" )
 parser.add_argument('--kconf', type=float, default=kconf, help = " Modify init value of kconf (default : %(default)s)" )
+parser.add_argument('--sleep', type=float, default=tsleep, help = " Modify init value of sleeping time between to reaction in display (default : %(default)s)" )
 
 args = parser.parse_args()
-
-print args
 
 if args.verbose:
 	ECHO=True
@@ -148,33 +147,37 @@ if args.plot:
 	PLOT = True
 
 if args.inputfile == DEFAULT_FILE:
-	print "default input"
 	PATH = DEFAULT_FILE
 	RUN = False
+	print "%sRead from input file %s %s" % (HEADER, PATH, KNRM)
 elif args.inputfile:
-	print "input"
 	RUN = False
 	PATH = args.inputfile
+	print "%sRead from input file %s %s" % (HEADER, PATH, KNRM)
 
 
 if args.outputfile == DEFAULT_FILE:
 	print "timed output"
 	PATH = '../DATA/simulation-'+datetime.now().strftime('%H:%M:%S')
 	RUN = True
+	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)
 elif args.outputfile:
 	print "specified output"
 	PATH = args.outputfile
 	RUN = True
+	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)
 
 if args.outputfile == None and args.inputfile == None:
 	print "last run output save"
 	PATH = DEFAULT_FILE
 	RUN = True
+	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)
 
 tmax = args.tmax
 N = args.n
 kcoll = args.kcoll
 kconf = args.kconf
+tsleep = args.sleep
 
 if not os.path.exists("../DATA"):
 	os.makedirs("../DATA")

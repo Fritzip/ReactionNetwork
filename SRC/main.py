@@ -104,7 +104,7 @@ if VISU:
 		l_vert.append( U.newVertex( visible = True, shape = "sphere", color = col ) )
 
 	for line in f:
-		time.sleep(0.01)
+		time.sleep(tsleep)
 		i, j, k = map(int, line.split())
 		if abs(k) == 1:
 			d_adj[i] += k
