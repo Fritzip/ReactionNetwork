@@ -10,6 +10,8 @@ from datetime import datetime
 
 import numpy as np
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+
 
 
 ####################################################################
@@ -97,6 +99,11 @@ ECHO = False
 RUN = True
 PROGRESS = True
 
+N = 5
+kcoll = 0.001
+kconf = 0.9
+tmax = 100000
+
 ####################################################################
 #			Arguments parser
 ####################################################################
@@ -111,10 +118,14 @@ parser.add_argument("--no-progress", action="store_true", default=0, help="Disab
 parser.add_argument("-p","--plot", action="store_true", default=0, help="Plot particles evolution")
 parser.add_argument("-x","--novisu", action="store_true", default=0, help="Disable dynamic graph visualisation")
 
-
 DEFAULT_FILE = '../DATA/last_run'
 filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a file", nargs='?', metavar="FILE", type=lambda x: is_valid_file(parser, x), const=DEFAULT_FILE)
 filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", nargs='?', metavar="FILE", const=DEFAULT_FILE)
+
+parser.add_argument('-t', '--tmax', type=int, default=tmax, help = " Modify init value of tmax (default : %(default)s)" )
+parser.add_argument('-n', type=int, default=N, help = " Modify init value of N (default : %(default)s)" )
+parser.add_argument('--kcoll', type=float, default=kcoll, help = " Modify init value of kcoll (default : %(default)s)" )
+parser.add_argument('--kconf', type=float, default=kconf, help = " Modify init value of kconf (default : %(default)s)" )
 
 args = parser.parse_args()
 
@@ -159,6 +170,11 @@ if args.outputfile == None and args.inputfile == None:
 	print "last run output save"
 	PATH = DEFAULT_FILE
 	RUN = True
+
+tmax = args.tmax
+N = args.n
+kcoll = args.kcoll
+kconf = args.kconf
 
 if not os.path.exists("../DATA"):
 	os.makedirs("../DATA")

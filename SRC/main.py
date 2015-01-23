@@ -12,11 +12,6 @@ import ubigraph
 #			Initialisation
 ####################################################################
 
-N = 5
-kcoll = 0.001
-kconf = 0.9
-tmax = 100000
-
 test = 7
 if test == 1:
 	d_init_part = {'a0':N, 'a1':1}
