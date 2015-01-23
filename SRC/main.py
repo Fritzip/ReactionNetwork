@@ -148,6 +148,3 @@ if PLOT:
 	plt.legend(loc='best')
 
 	plt.show(block=True)
-
-
-if not SAVE : os.remove(PATH)

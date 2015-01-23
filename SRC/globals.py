@@ -96,7 +96,6 @@ PLOT = False
 ECHO = False
 RUN = True
 PROGRESS = True
-SAVE = True
 
 ####################################################################
 #			Arguments parser
@@ -112,12 +111,14 @@ parser.add_argument("--no-progress", action="store_true", default=0, help="Disab
 parser.add_argument("-p","--plot", action="store_true", default=0, help="Plot particles evolution")
 parser.add_argument("-x","--novisu", action="store_true", default=0, help="Disable dynamic graph visualisation")
 
-filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a file", metavar="FILE", type=lambda x: is_valid_file(parser, x))
 
-DEF_OFILE = '../DATA/simulation'+datetime.now().strftime('%H:%M:%S')
-filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", nargs='?', metavar="FILE", default=DEF_OFILE)
+DEFAULT_FILE = '../DATA/last_run'
+filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a file", nargs='?', metavar="FILE", type=lambda x: is_valid_file(parser, x), const=DEFAULT_FILE)
+filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", nargs='?', metavar="FILE", const=DEFAULT_FILE)
 
 args = parser.parse_args()
+
+print args
 
 if args.verbose:
 	ECHO=True
@@ -135,15 +136,29 @@ if args.novisu:
 if args.plot:
 	PLOT = True
 
-if args.inputfile:
+if args.inputfile == DEFAULT_FILE:
+	print "default input"
+	PATH = DEFAULT_FILE
+	RUN = False
+elif args.inputfile:
+	print "input"
 	RUN = False
 	PATH = args.inputfile
-elif args.outputfile == DEF_OFILE:
-	PATH = args.outputfile
-	SAVE = False
-else :
-	PATH = DEF_OFILE
 
+
+if args.outputfile == DEFAULT_FILE:
+	print "timed output"
+	PATH = '../DATA/simulation-'+datetime.now().strftime('%H:%M:%S')
+	RUN = True
+elif args.outputfile:
+	print "specified output"
+	PATH = args.outputfile
+	RUN = True
+
+if args.outputfile == None and args.inputfile == None:
+	print "last run output save"
+	PATH = DEFAULT_FILE
+	RUN = True
 
 if not os.path.exists("../DATA"):
 	os.makedirs("../DATA")
