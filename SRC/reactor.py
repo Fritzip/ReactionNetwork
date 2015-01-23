@@ -92,16 +92,17 @@ class Reactor():
 				n += 1
 
 			id_part = self.apply_reaction(self.l_rules[n-1])
-			update_progress("Progression", t, self.tmax, "time.unit.")
 
 			if ECHO and id_part != -1:
 				print "############ t = %.3f ###########" % t
 				print "# ai = ", ai
 				print "# reac = ", self.l_rules[n-1].rule
 				print "# id = ", id_part
-				print "#", r.g.d_state_type
-				print "#", r.g.d_pair
+				print "#", self.g.d_state_type
+				print "#", self.g.d_pair
 				print "##################################\n\n"
+			elif PROGRESS:
+				update_progress("Progression", t, self.tmax, "time.unit.")
 
 			if PLOT:
 				self.compute_plot_dict( self.d_y_evol_type, self.g.d_state_type, len(self.time_vect) )

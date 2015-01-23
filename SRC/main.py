@@ -12,12 +12,12 @@ import ubigraph
 #			Initialisation
 ####################################################################
 
-N = 4
-kcoll = 0.001
+N = 40
+kcoll = 0.01
 kconf = 0.9
-tmax = 100000
+tmax = 100
 
-test = 7
+test = 4
 if test == 1:
 	d_init_part = {'a0':N, 'a1':1}
 	d_init_grap = {}	
@@ -39,7 +39,7 @@ if test == 3:
 if test == 4:
 	d_init_part = {'a0':N, 'a1':1}
 	d_init_grap = {}	
-	l_rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1']
+	l_rules = ['a0+a1=a0a1','a0a1=a2a3', 'a3a2=a0a1', 'a0a1=a0+a1']
 	l_type = ['a']
 
 if test == 5:
@@ -64,25 +64,26 @@ if test == 7:
 ####################################################################
 #			Launch Gillespie Algorithm
 ####################################################################
-f = open('simu','w')
-start = time.time()
+if RUN:
+	f = open(PATH,'w')
+	start = time.time()
 
-r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, f) 
+	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, f) 
 
-t = r.gillespie()
-if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
+	t = r.gillespie()
+	if t < tmax : print "\n Out before end of time. Cause : no more reaction available"
 
-end = time.time()
-print "Execution time : %.3f sec" % (end - start)
+	end = time.time()
+	print "Execution time : %.3f sec" % (end - start)
 
-f.close()
+	f.close()
 
 
 ####################################################################
 #			Output
 ####################################################################
 
-if VISU and SAVE:
+if VISU:
 	import subprocess
 	bashCommand = "./ubigraph_server &"
 	process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -99,7 +100,7 @@ if VISU and SAVE:
 
 	d_col = {l_type[i] : COLORS[i] for i in range(len(l_type))}
 
-	f = open('simu', 'r')
+	f = open(PATH, 'r')
 	l_part = f.readline().split()
 	for i, stype in enumerate(l_part):
 		d_adj[i] = 0
@@ -115,15 +116,16 @@ if VISU and SAVE:
 			d_adj[j] += k
 			if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j], width = 3, color = '#FFFFFF', strength = 0.3)
 			elif k == -1: d_edges[make_tpl(i,j)].destroy()
-			# if d_adj[i] : l_vert[i].set(visible=True)
-			# else : l_vert[i].set(visible=False)
-			# if d_adj[j] : l_vert[j].set(visible=True)
-			# else : l_vert[j].set(visible=False)
+			if d_adj[i] : l_vert[i].set(visible=True)
+			else : l_vert[i].set(visible=False)
+			if d_adj[j] : l_vert[j].set(visible=True)
+			else : l_vert[j].set(visible=False)
 			if d_adj[i] : l_vert[i].set(size=0.7*d_adj[i])
 			if d_adj[j] : l_vert[j].set(size=0.7*d_adj[j])
 
 		elif k == 0:
 			d_state[i] = j
+
 
 if PLOT:
 	fig = plt.figure()
@@ -132,8 +134,7 @@ if PLOT:
 	plt1 = fig.add_subplot(1,2,1)
 	for key in r.d_y_evol_type.keys():
 		x, y = r.time_vect, r.d_y_evol_type[key]
-		try:
-			if SMOOTH: x, y = smoothinterp(x, y) 
+		try: x, y = smoothinterp(x, y) 
 		except: pass
 		plt.plot(x, y, linewidth=2, label=key)
 	plt.legend(loc='best')
@@ -141,8 +142,7 @@ if PLOT:
 	plt2 = fig.add_subplot(1,2,2)
 	for key in r.d_y_evol_pair.keys():
 		x, y = r.time_vect, r.d_y_evol_pair[key]
-		try:
-			if SMOOTH: x, y = smoothinterp(x, y) 
+		try: x, y = smoothinterp(x, y) 
 		except: pass
 		plt.plot(x, y, linewidth=2, label=key)
 	plt.legend(loc='best')

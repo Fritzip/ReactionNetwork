@@ -85,4 +85,5 @@ def replace_at_idx(s, ch, idx):
 
 if __name__ == '__main__':
 	r = Rule("a0+a1 = a1a2")
+	print r
 	print r.get_final_state(1)	

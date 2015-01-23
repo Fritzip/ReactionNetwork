@@ -3,24 +3,24 @@
 
 import random
 import sys
+import os.path
+import argparse
 import struct
+from datetime import datetime
 
 import numpy as np
 from scipy.interpolate import interp1d
 
-####################################################################
-#			Global Parameters (default)
-####################################################################
-VISU = True
-PLOT = False
-SMOOTH = True
-ECHO = False
-SAVE = True
 
-COLORS = [(230, 41, 41), (189, 41, 230), (50, 41, 230), (41, 183, 230), (41, 230, 88), (221, 230, 41), (230, 164, 41)]
-random.shuffle(COLORS)
+####################################################################
+#			Global functions
+####################################################################
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def is_valid_file(parser, arg):
+    if not os.path.exists(arg):
+        parser.error("The file %s does not exist!" % arg)
+    else:
+        return arg
 
 def get_col(rgb_col, state):
 	return '#'+struct.pack('BBB',*rgb_col).encode('hex')
@@ -70,3 +70,79 @@ def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medi
 	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.2f}/{4:.2f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
 	sys.stdout.flush()
 	
+
+####################################################################
+#			Colors
+####################################################################
+# For plots
+HEADER = '\033[1m' # bold
+OKBLUE = '\033[94m' # blue
+OKGREEN = '\033[92m' # green
+WARNING = '\033[93m' # yellow
+FAIL = '\033[91m' # red
+UNDERLINE = '\033[4m'
+ENDC = '\033[0m' # back to normal
+
+# For graph
+COLORS = [(230, 41, 41), (189, 41, 230), (50, 41, 230), (41, 183, 230), (41, 230, 88), (221, 230, 41), (230, 164, 41)]
+random.shuffle(COLORS)
+COLORS = COLORS*2
+
+####################################################################
+#			Global Parameters (default)
+####################################################################
+VISU = True
+PLOT = False
+ECHO = False
+RUN = True
+PROGRESS = True
+SAVE = True
+
+####################################################################
+#			Arguments parser
+####################################################################
+parser = argparse.ArgumentParser(description="Biological Reaction Network Simulator",usage='%(prog)s [options]')
+group = parser.add_mutually_exclusive_group()
+filegrp = parser.add_mutually_exclusive_group()
+
+group.add_argument("-v", "--verbose", action="store_true", default=0)
+group.add_argument("-q", "--quiet", action="store_true", default=0)
+parser.add_argument("--no-progress", action="store_true", default=0, help="Disable the progress bar")
+
+parser.add_argument("-p","--plot", action="store_true", default=0, help="Plot particles evolution")
+parser.add_argument("-x","--novisu", action="store_true", default=0, help="Disable dynamic graph visualisation")
+
+filegrp.add_argument("-i", dest="inputfile", help="Launch a simulation from a file", metavar="FILE", type=lambda x: is_valid_file(parser, x))
+
+DEF_OFILE = '../DATA/simulation'+datetime.now().strftime('%H:%M:%S')
+filegrp.add_argument("-o", dest="outputfile", help="Save the simulation into a file", metavar="FILE", default=DEF_OFILE)
+
+args = parser.parse_args()
+
+print args
+
+if args.verbose:
+	ECHO=True
+	PROGRESS = False
+elif args.quiet:
+	ECHO=False
+	PROGRESS = False
+
+if args.no_progress:
+	PROGRESS = False
+
+if args.novisu:
+	VISU = False
+
+if args.plot:
+	PLOT = True
+
+if args.inputfile:
+	RUN = False
+	SAVE = False
+	PATH = args.inputfile
+else :
+	PATH = args.outputfile
+
+if args.outputfile == DEF_OFILE:
+	SAVE = False
