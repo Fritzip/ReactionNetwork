@@ -1,7 +1,12 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
 import random
-import colorsys
+import sys
 import struct
 
+import numpy as np
+from scipy.interpolate import interp1d
 
 ####################################################################
 #			Global Parameters (default)
@@ -58,3 +63,10 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
 	lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
 	y = np.concatenate((firstvals, y, lastvals))
 	return np.convolve( m[::-1], y, mode='valid')
+
+def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medium 25, large 50
+	progress = int(nb*100/nbmax)
+	if progress > 100 : progress = 100
+	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.2f}/{4:.2f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
+	sys.stdout.flush()
+	

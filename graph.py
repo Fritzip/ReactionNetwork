@@ -1,10 +1,20 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import random
 
 import ubigraph
 from particle import *
 from globals import *
- 
+
+
+###############################################################################
+#
+#					Graph Class
+#
+###############################################################################
+
 class Graph():
 	"""Interactions between particles"""
 	def __init__(self, l_particles, m_adj, f):
@@ -13,11 +23,6 @@ class Graph():
 		self.m_adj = m_adj
 		self.d_pair = self.compute_d_pair()
 		if SAVE: self.f = f
-
-		# if VISU:
-		# 	self.U = U
-		# 	self.l_vert = l_vert
-		# 	self.d_edges = d_edges
 
 	@classmethod
 	def from_particles_init(cls, d_init_part, d_init_graph, f):
@@ -54,10 +59,6 @@ class Graph():
 				i += 1
 				id_part += 1
 
-		# if VISU:
-			# for part in l_part:
-				# l_vert.append( U.newVertex(  ) ) #label = part.stype()
-
 		if SAVE: 
 			map(lambda x: f.write('%s ' % x.stype()), l_part )
 			f.write('\n')
@@ -70,9 +71,6 @@ class Graph():
 			mat[i][j] = 1
 			mat[j][i] = 1
 			if SAVE: f.write("%s %s %s\n" % (i, j, 1))
-			# if VISU:
-				# d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j])
-		# print mat
 
 		return cls(l_part, mat, f)
 
@@ -95,17 +93,14 @@ class Graph():
 					add_to_dict( d, key, pair )
 		return d
 
-	def recompute_all(self):
+	def recompute_pair_dict(self):
 		""" Reinit all dictionary from adjacency matrix """ 
-		# self.d_state_type = self.compute_d_state_type()
 		self.d_pair = self.compute_d_pair()
 
 	def link(self, id_part0, id_part1, rule):
 		""" Link two particles (defined by there id) according to the given rule """
 		self.m_adj[id_part0][id_part1] = 1
 		self.m_adj[id_part1][id_part0] = 1
-		# if VISU:
-			# self.d_edges[make_tpl(id_part0, id_part1)] = self.U.newEdge(self.l_vert[id_part0], self.l_vert[id_part1])
 		if SAVE: self.f.write("%s %s %s\n" % (id_part0, id_part1, 1))
 
 
@@ -113,8 +108,6 @@ class Graph():
 		""" Unink two particles (defined by a pair of id) according to the given rule """
 		self.m_adj[pair[0]][pair[1]] = 0
 		self.m_adj[pair[1]][pair[0]] = 0
-		# if VISU:
-			# self.d_edges[make_tpl(pair[0], pair[1])].destroy()
 		if SAVE: self.f.write("%s %s %s\n" % (pair[0], pair[1], -1))
 
 	def modify_state_of_pair(self, pair, rule):
@@ -133,16 +126,15 @@ class Graph():
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def rm_from_dict(d, key, value):
 	d[key].remove(value)
 	if d[key] == []:
 		del d[key]
 
 def add_to_dict(d, key, value):
-	# if key in d.keys():
 	try :
 		d[key].append(value)
-	# else:
 	except KeyError:
 		d[key] = [value]
 

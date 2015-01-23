@@ -1,3 +1,11 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
+###############################################################################
+#
+#					Rule Classs
+#
+###############################################################################
 
 class Rule():
 	"""Transform a formated rule into stochastic matrix"""
@@ -30,6 +38,13 @@ class Rule():
 	def get_final_state(self, i):
 		return self.right[i][1]
 
+
+###############################################################################
+#
+#					Rule Generator Classs
+#
+###############################################################################
+
 class RuleGenerator():
 	""" Given a list of regex rules, create a list of rules """
 	def __init__(self, l_regex_rules, l_type):
@@ -56,11 +71,17 @@ class RuleGenerator():
 		self.l_rules = list(set(self.l_rules))
 		print self.l_rules
 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def find(s, ch):
     return [i for i, ltr in enumerate(s) if ltr == ch]
 
 def replace_at_idx(s, ch, idx):
 	return s[:idx] + ch + s[idx+1:]
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 if __name__ == '__main__':
 	r = Rule("a0+a1 = a1a2")

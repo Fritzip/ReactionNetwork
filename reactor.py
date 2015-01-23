@@ -1,3 +1,6 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
 import math 
 import random
 import numpy as np
@@ -19,7 +22,6 @@ class Reactor():
 		self.time_vect = []
 		self.d_y_evol_type = {}
 		self.d_y_evol_pair = {}
-
 
 	@classmethod
 	def from_particles_init(cls, d_init_part, d_init_graph, l_regex_rules, l_type, kconf, kcoll, tmax, f):
@@ -59,7 +61,7 @@ class Reactor():
 
 		self.g.modify_state_of_pair(id_pair, rule)
 
-		self.g.recompute_all()
+		self.g.recompute_pair_dict()
 		return id_pair
 
 	def compute_plot_dict(self, d_y_evol, d_part, size ):
@@ -108,12 +110,3 @@ class Reactor():
 
 		return t
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def update_progress(label, nb, nbmax, unit="", bar_length=25 ): # small 20, medium 25, large 50
-	progress = int(nb*100/nbmax)
-	if progress > 100 : progress = 100
-	sys.stdout.write('\r{2:<20} [{0}] {1:3d}% \t {3:.2f}/{4:.2f} {5}'.format('#'*(progress/int(100./bar_length))+'-'*(bar_length-(progress/int(100./bar_length))), progress, label, nb, nbmax, unit ))
-	sys.stdout.flush()
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	

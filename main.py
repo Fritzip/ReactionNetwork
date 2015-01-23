@@ -1,6 +1,8 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
 import time
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 
 from reactor import *
 import ubigraph
@@ -10,12 +12,12 @@ import ubigraph
 #			Initialisation
 ####################################################################
 
-N = 20
-kcoll = 0.1
+N = 4
+kcoll = 0.001
 kconf = 0.9
-tmax = 100
+tmax = 100000
 
-test = 6
+test = 7
 if test == 1:
 	d_init_part = {'a0':N, 'a1':1}
 	d_init_grap = {}	
@@ -54,9 +56,9 @@ if test == 6:
 
 if test == 7:
 	l_type = ['a', 'b', 'c', 'd', 'e', 'f']
-	d_init_part = {'a0':N/6, 'b0':N/6, 'c0':N/6, 'd0':N/6, 'e0':N/6, 'f0':N/6}
-	d_init_grap = {"e8-a1-b1-c1-d1-f1":3}	
-	l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8#8']
+	d_init_part = {'a0':N, 'b0':N, 'c0':N, 'd0':N, 'e0':N, 'f0':N}
+	d_init_grap = {"e8-a1-b1-c1-d1-f1":1}	
+	l_rules = ['e8+e0 = e4e3', '*4#1 = *2#5', '*5+*0 = *7*6', '*3+#6 = *2#3', '*7#3 = *4#3', 'f4f3 = f8+f8', '*2#8 = *9#1', '*9#9 = *8+#8']
 
 
 ####################################################################
@@ -113,7 +115,6 @@ if VISU and SAVE:
 			d_adj[j] += k
 			if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j], width = 3, color = '#FFFFFF', strength = 0.3)
 			elif k == -1: d_edges[make_tpl(i,j)].destroy()
-			# opt : mod size vert and visibility
 			# if d_adj[i] : l_vert[i].set(visible=True)
 			# else : l_vert[i].set(visible=False)
 			# if d_adj[j] : l_vert[j].set(visible=True)
@@ -123,11 +124,6 @@ if VISU and SAVE:
 
 		elif k == 0:
 			d_state[i] = j
-			# opt : mod label + couleur
-
-	# print l_part
-	# print d_adj
-	# print d_state
 
 if PLOT:
 	fig = plt.figure()
@@ -146,7 +142,7 @@ if PLOT:
 	for key in r.d_y_evol_pair.keys():
 		x, y = r.time_vect, r.d_y_evol_pair[key]
 		try:
-			if SMOOTH:x, y = smoothinterp(x, y) 
+			if SMOOTH: x, y = smoothinterp(x, y) 
 		except: pass
 		plt.plot(x, y, linewidth=2, label=key)
 	plt.legend(loc='best')
