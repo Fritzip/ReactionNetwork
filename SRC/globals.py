@@ -157,18 +157,15 @@ elif args.inputfile:
 
 
 if args.outputfile == DEFAULT_FILE:
-	print "timed output"
 	PATH = '../DATA/simulation-'+datetime.now().strftime('%H:%M:%S')
 	RUN = True
 	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)
 elif args.outputfile:
-	print "specified output"
 	PATH = args.outputfile
 	RUN = True
 	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)
 
 if args.outputfile == None and args.inputfile == None:
-	print "last run output save"
 	PATH = DEFAULT_FILE
 	RUN = True
 	print "%sWrite in output file %s %s" % (HEADER, PATH, KNRM)

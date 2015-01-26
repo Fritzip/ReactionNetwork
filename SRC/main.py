@@ -65,13 +65,38 @@ if RUN:
 
 	r = Reactor.from_particles_init(d_init_part, d_init_grap, l_rules, l_type, kcoll, kconf, tmax, f) 
 
-	t = r.gillespie()
-	if t < tmax : print "\n%sOut before end of time. Cause : no more reaction available%s" %(KYEL, KNRM)
+	try: 
+		t = r.gillespie()
+		if t < tmax : print "\n%sOut before end of time. Cause : no more reaction available%s" %(KYEL, KNRM)
+	except KeyboardInterrupt:
+		print "\n%sOut before end of time. Cause : user interuption%s" %(KYEL, KNRM)
 
 	end = time.time()
 	print "%sExecution time : %.3f sec%s" % (KGRN, end - start, KNRM)
 
 	f.close()
+
+	if PLOT:
+		fig = plt.figure()
+		cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
+
+		plt1 = fig.add_subplot(1,2,1)
+		for key in r.d_y_evol_type.keys():
+			x, y = r.time_vect, r.d_y_evol_type[key]
+			try: x, y = smoothinterp(x, y) 
+			except: pass
+			plt.plot(x, y, linewidth=2, label=key)
+		plt.legend(loc='best')
+
+		plt2 = fig.add_subplot(1,2,2)
+		for key in r.d_y_evol_pair.keys():
+			x, y = r.time_vect, r.d_y_evol_pair[key]
+			try: x, y = smoothinterp(x, y) 
+			except: pass
+			plt.plot(x, y, linewidth=2, label=key)
+		plt.legend(loc='best')
+
+		plt.show(block=True)
 
 
 ####################################################################
@@ -96,50 +121,30 @@ if VISU:
 	d_col = {l_type[i] : COLORS[i] for i in range(len(l_type))}
 
 	f = open(PATH, 'r')
-	l_part = f.readline().split()
-	for i, stype in enumerate(l_part):
-		d_adj[i] = 0
-		d_state[i] = int(stype[1])
-		col = get_col(d_col[stype[0]], stype[1])
-		l_vert.append( U.newVertex( visible = True, shape = "sphere", color = col ) )
+	try:
+		l_part = f.readline().split()
+		for i, stype in enumerate(l_part):
+			d_adj[i] = 0
+			d_state[i] = int(stype[1])
+			col = get_col(d_col[stype[0]], stype[1])
+			l_vert.append( U.newVertex( visible = True, shape = "sphere", color = col ) )
 
-	for line in f:
-		time.sleep(tsleep)
-		i, j, k = map(int, line.split())
-		if abs(k) == 1:
-			d_adj[i] += k
-			d_adj[j] += k
-			if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j], width = 3, color = '#FFFFFF', strength = 0.3)
-			elif k == -1: d_edges[make_tpl(i,j)].destroy()
-			if d_adj[i] : l_vert[i].set(visible=True)
-			else : l_vert[i].set(visible=False)
-			if d_adj[j] : l_vert[j].set(visible=True)
-			else : l_vert[j].set(visible=False)
-			if d_adj[i] : l_vert[i].set(size=0.7*d_adj[i])
-			if d_adj[j] : l_vert[j].set(size=0.7*d_adj[j])
+		for line in f:
+			time.sleep(tsleep)
+			i, j, k = map(int, line.split())
+			if abs(k) == 1:
+				d_adj[i] += k
+				d_adj[j] += k
+				if   k ==  1: d_edges[make_tpl(i,j)] = U.newEdge(l_vert[i], l_vert[j], width = 3, color = '#FFFFFF', strength = 0.3)
+				elif k == -1: d_edges[make_tpl(i,j)].destroy()
+				if d_adj[i] : l_vert[i].set(visible=True)
+				else : l_vert[i].set(visible=False)
+				if d_adj[j] : l_vert[j].set(visible=True)
+				else : l_vert[j].set(visible=False)
+				if d_adj[i] : l_vert[i].set(size=0.7*d_adj[i])
+				if d_adj[j] : l_vert[j].set(size=0.7*d_adj[j])
 
-		elif k == 0:
-			d_state[i] = j
-
-
-if PLOT:
-	fig = plt.figure()
-	cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
-
-	plt1 = fig.add_subplot(1,2,1)
-	for key in r.d_y_evol_type.keys():
-		x, y = r.time_vect, r.d_y_evol_type[key]
-		try: x, y = smoothinterp(x, y) 
-		except: pass
-		plt.plot(x, y, linewidth=2, label=key)
-	plt.legend(loc='best')
-
-	plt2 = fig.add_subplot(1,2,2)
-	for key in r.d_y_evol_pair.keys():
-		x, y = r.time_vect, r.d_y_evol_pair[key]
-		try: x, y = smoothinterp(x, y) 
-		except: pass
-		plt.plot(x, y, linewidth=2, label=key)
-	plt.legend(loc='best')
-
-	plt.show(block=True)
+			elif k == 0:
+				d_state[i] = j
+	except: pass
+	f.close()
